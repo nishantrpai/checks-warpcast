@@ -4,6 +4,9 @@
 
 // let  https://api.checks.art/checks?filter[owner]=0x5efdb6d8c798c2c2bea5b1961982a5944f92a5c1&page=1
 
+let locations = [];
+let checks = {};
+
 const fetchChecks = async (owner) => {
   const response = await fetch(`https://api.checks.art/checks?filter[owner]=${owner.toLowerCase()}&page=1`);
   const data = await response.json();
@@ -20,7 +23,7 @@ const fetchRareCheckFromList = (tokens) => {
     checks80: []
   }
   tokens.forEach(token => {
-    if(!token.data) return;
+    if (!token.data) return;
     allChecks.checks1 = allChecks.checks1.concat(token.data.visuals.checks1);
     allChecks.checks20 = allChecks.checks20.concat(token.data.visuals.checks20);
     allChecks.checks40 = allChecks.checks40.concat(token.data.visuals.checks40);
@@ -29,15 +32,25 @@ const fetchRareCheckFromList = (tokens) => {
 
   // filter empty strings from all
   allChecks.checks1 = allChecks.checks1.filter(check => check !== '');
+  allChecks.checks4 = allChecks.checks4.filter(check => check !== '');
+  allChecks.checks5 = allChecks.checks5.filter(check => check !== '');
+  allChecks.checks10 = allChecks.checks10.filter(check => check !== '');
   allChecks.checks20 = allChecks.checks20.filter(check => check !== '');
   allChecks.checks40 = allChecks.checks40.filter(check => check !== '');
   allChecks.checks80 = allChecks.checks80.filter(check => check !== '');
-  
 
-  console.log(allChecks)
 
   if (allChecks.checks1.length > 0) {
     mostRare = allChecks.checks1[0];
+  }
+  else if (allChecks.checks4.length > 0) {
+    mostRare = allChecks.checks4[0]
+  }
+  else if (allChecks.checks5.length > 0) {
+    mostRare = allChecks.checks5[0]
+  }
+  else if (allChecks.checks10.length > 0) {
+    mostRare = allChecks.checks10[0]
   }
   else if (allChecks.checks20.length > 0) {
     mostRare = allChecks.checks20[0]
@@ -70,7 +83,6 @@ function getAllUsernames() {
   let avatars = document.querySelectorAll('img[alt*="avatar"]');
   let handles = [];
   const userElements = [];
-  let locations = [];
   avatars.forEach(avatar => {
     // go up the parentelement till we get span with font-semibold class that is the username
     let username = avatar.parentElement;
@@ -78,9 +90,9 @@ function getAllUsernames() {
     while (!username?.querySelector('span.font-semibold')) {
       username = username.parentElement;
       count++;
-      if(count > 10) break;
+      if (count > 10) break;
     }
-    if(username.querySelector('span.font-semibold')) {
+    if (username.querySelector('span.font-semibold')) {
       userElements.push(username.querySelector('span.font-semibold'));
     }
 
@@ -89,10 +101,10 @@ function getAllUsernames() {
     while (!username?.querySelector('span.font-bold.leading-5')) {
       username = username.parentElement;
       count++;
-      if(count > 10) break;
+      if (count > 10) break;
     }
 
-    if(username.querySelector('span.font-bold.leading-5')) {
+    if (username.querySelector('span.font-bold.leading-5')) {
       userElements.push(username.querySelector('span.font-bold.leading-5'));
     }
 
@@ -102,19 +114,19 @@ function getAllUsernames() {
     while (!handle?.querySelector('.text-muted')) {
       handle = handle.parentElement;
       count++;
-      if(count > 10) break;
+      if (count > 10) break;
     }
-    if(handle.querySelector('.text-muted')) {
+    if (handle.querySelector('.text-muted')) {
       handles.push(handle.querySelector('.text-muted').innerText);
     }
     handle = avatar.parentElement;
     count = 0;
-    while (!handle?.querySelector('.text-faint'))  {
+    while (!handle?.querySelector('.text-faint')) {
       handle = handle.parentElement;
       count++;
-      if(count > 10) break;
+      if (count > 10) break;
     }
-    if(handle.querySelector('.text-faint')) {
+    if (handle.querySelector('.text-faint')) {
       handles.push(handle.querySelector('.text-faint').innerText);
     }
   });
@@ -123,38 +135,71 @@ function getAllUsernames() {
   // add to locations the userElements and handles 'position' and 'username' respectively
   userElements.forEach((element, index) => {
     // handle should be @nishu etc can't have spaces or anything
-    if(handles[index].includes(' ')) return; 
-    if(!handles[index].includes('@')) return;
+    if (handles[index].includes(' ')) return;
+    if (!handles[index].includes('@')) return;
     // if location already exists then skip
-    if(locations.find(location => location.position === element)) return;
+    if (locations.find(location => location.position === element)) return;
     locations.push({
       position: element,
       username: handles[index]
     });
   });
-  
+
   return locations;
 }
+
+function getGradient(colorArray) {
+  // get the gradient from the array of colors
+  let gradient = '';
+  gradient += '<linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">';
+  colorArray.forEach((color, index) => {
+    // linear gradient for svg
+    gradient += `<stop offset="${index * 20}%" stop-color="${color}" />`;
+  });
+  gradient += '</linearGradient>';
+  return gradient;
+}
+
+
+function getArrayofColors(svg) {
+  let matrix = [];
+  let div = document.createElement('div');
+  div.innerHTML = svg;
+  let checks = document.querySelectorAll('use[href="#check"]');
+  matrix = Array.from(checks).map(check => check.getAttribute('fill'));
+  return matrix;
+}
+
 
 // get all the checks from the address
 // get the most rare check from the list
 // display the most rare check in the username
 const displayChecks = async () => {
   let locations = getAllUsernames();
+  let checksvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" style="width:100%;background:transparent;"><defs><path id="c" fill-rule="evenodd" d="M21.36 9.886A3.93 3.93 0 0 0 18 8a3.93 3.93 0 0 0-3.36 1.887 3.935 3.935 0 0 0-4.753 4.753A3.93 3.93 0 0 0 8 18c0 1.423.755 2.669 1.886 3.36a3.935 3.935 0 0 0 4.753 4.753 3.93 3.93 0 0 0 4.863 1.59 3.95 3.95 0 0 0 1.858-1.589 3.935 3.935 0 0 0 4.753-4.754A3.93 3.93 0 0 0 28 18a3.93 3.93 0 0 0-1.887-3.36 3.93 3.93 0 0 0-1.042-3.711 3.93 3.93 0 0 0-3.71-1.043Zm-3.958 11.713 4.562-6.844c.566-.846-.751-1.724-1.316-.878l-4.026 6.043-1.371-1.368c-.717-.722-1.836.396-1.116 1.116l2.17 2.15a.79.79 0 0 0 1.097-.22Z"/><path id="a" stroke="#191919" d="M0 0h36v36H0z"/><g id="b"><use href="#a" x="196" y="160"/><use href="#a" x="232" y="160"/><use href="#a" x="268" y="160"/><use href="#a" x="304" y="160"/><use href="#a" x="340" y="160"/><use href="#a" x="376" y="160"/><use href="#a" x="412" y="160"/><use href="#a" x="448" y="160"/></g></defs><path fill="transparent" d="M0 0h680v680H0z"/><path fill="#111" d="M188 152h304v376H188z"/><use href="#b"/><use href="#b" y="36"/><use href="#b" y="72"/><use href="#b" y="108"/><use href="#b" y="144"/><use href="#b" y="180"/><use href="#b" y="216"/><use href="#b" y="252"/><use href="#b" y="288"/><use href="#b" y="324"/><use href="#check" fill="#DE3237" transform="scale(3)"><animate attributeName="fill" values="#DE3237;#C23532;#FF7F8E;#E84AA9;#371471;#525EAA;#4576D0;#9AD9FB;#33758D;#77D3DE;#9DEFBF;#86E48E;#A7CA45;#FAE272;#F4C44A;#FAD064;#F2A840;#F18930;#D05C35;#EC7368;#DE3237" dur="10s" begin="d.begin" repeatCount="indefinite"/></use><path fill="transparent" d="M0 0h680v680H0z"><animate attributeName="width" from="680" to="0" dur="0.2s" begin="click" fill="freeze" id="d"/></path></svg>'
+
+
   locations.forEach(async location => {
     // temperory display the check in the username
+    let connectedAddress = await getConnectedWallet(location.username);
+    let checks = await fetchChecks(connectedAddress);
+    let rareCheck = fetchRareCheckFromList(checks.data);
+    // get the gradient from the rare check
+    let colors = getArrayofColors(rareCheck);
+    let gradient = getGradient(colors);
+    // add the gradient to the svg
+    checksvg = checksvg.replace('<defs>', `<defs>${gradient}`);
+    checksvg = checksvg.replace('<use href="#check" fill="#DE3237"', `<use href="#check" fill="url(#gradient)"`);
+
     let ctr = document.createElement('div');
     ctr.style.display = 'flex';
     ctr.style.width = '22px';
     ctr.style.height = '22px';
     ctr.style.justifyContent = 'center';
     let img = document.createElement('img');
-    img.src = "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%20100%20100%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20style%3D%22width%3A100%25%3Bbackground%3Atransparent%3B%22%3E%3Cdefs%3E%3Cpath%20id%3D%22c%22%20fill-rule%3D%22evenodd%22%20d%3D%22M21.36%209.886A3.93%203.93%200%200%200%2018%208a3.93%203.93%200%200%200-3.36%201.887%203.935%203.935%200%200%200-4.753%204.753A3.93%203.93%200%200%200%208%2018c0%201.423.755%202.669%201.886%203.36a3.935%203.935%200%200%200%204.753%204.753%203.93%203.93%200%200%200%204.863%201.59%203.95%203.95%200%200%200%201.858-1.589%203.935%203.935%200%200%200%204.753-4.754A3.93%203.93%200%200%200%2028%2018a3.93%203.93%200%200%200-1.887-3.36%203.93%203.93%200%200%200-1.042-3.711%203.93%203.93%200%200%200-3.71-1.043Zm-3.958%2011.713%204.562-6.844c.566-.846-.751-1.724-1.316-.878l-4.026%206.043-1.371-1.368c-.717-.722-1.836.396-1.116%201.116l2.17%202.15a.79.79%200%200%200%201.097-.22Z%22%2F%3E%3Cpath%20id%3D%22a%22%20stroke%3D%22%23191919%22%20d%3D%22M0%200h36v36H0z%22%2F%3E%3Cg%20id%3D%22b%22%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22196%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22232%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22268%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22304%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22340%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22376%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22412%22%20y%3D%22160%22%2F%3E%3Cuse%20href%3D%22%23a%22%20x%3D%22448%22%20y%3D%22160%22%2F%3E%3C%2Fg%3E%3C%2Fdefs%3E%3Cpath%20fill%3D%22transparent%22%20d%3D%22M0%200h680v680H0z%22%2F%3E%3Cpath%20fill%3D%22%23111%22%20d%3D%22M188%20152h304v376H188z%22%2F%3E%3Cuse%20href%3D%22%23b%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%2236%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%2272%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22108%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22144%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22180%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22216%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22252%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22288%22%2F%3E%3Cuse%20href%3D%22%23b%22%20y%3D%22324%22%2F%3E%3Cuse%20href%3D%22%23c%22%20fill%3D%22%23DE3237%22%20transform%3D%22scale(3)%22%3E%3Canimate%20attributeName%3D%22fill%22%20values%3D%22%23DE3237%3B%23C23532%3B%23FF7F8E%3B%23E84AA9%3B%23371471%3B%23525EAA%3B%234576D0%3B%239AD9FB%3B%2333758D%3B%2377D3DE%3B%239DEFBF%3B%2386E48E%3B%23A7CA45%3B%23FAE272%3B%23F4C44A%3B%23FAD064%3B%23F2A840%3B%23F18930%3B%23D05C35%3B%23EC7368%3B%23DE3237%22%20dur%3D%2210s%22%20begin%3D%22d.begin%22%20repeatCount%3D%22indefinite%22%2F%3E%3C%2Fuse%3E%3Cpath%20fill%3D%22transparent%22%20d%3D%22M0%200h680v680H0z%22%3E%3Canimate%20attributeName%3D%22width%22%20from%3D%22680%22%20to%3D%220%22%20dur%3D%220.2s%22%20begin%3D%22click%22%20fill%3D%22freeze%22%20id%3D%22d%22%2F%3E%3C%2Fpath%3E%3C%2Fsvg%3E";
+    img.src = 'data:image/svg+xml,' + encodeURIComponent(checksvg);
     ctr.appendChild(img);
     location.position.parentElement.appendChild(ctr);
-    // let connectedAddress = await getConnectedWallet(location.username);
-    // let checks = await fetchChecks(connectedAddress);
-    // let rareCheck = fetchRareCheckFromList(checks.data);
     // // add adjacent to the username
     // let img = document.createElement('img');
     // img.src = rareCheck;
