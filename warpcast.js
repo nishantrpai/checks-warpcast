@@ -100,8 +100,26 @@ function getAllUsernames() {
   console.log(locations);
 }
 // given the username find the connected address using searchcaster
+async function getConnectedWallet(handle) {
+  // e.g., https://searchcaster.xyz/api/profiles?username=nishu
+  let response = await fetch(`https://searchcaster.xyz/api/profiles?username=${handle}`);
+  let data = await response.json();
+  return data[0].connectedAddress;
+}
 // get all the checks from the address
 // get the most rare check from the list
 // display the most rare check in the username
+const displayChecks = async () => {
+  let locations = getAllUsernames();
+  locations.forEach(async location => {
+    let connectedAddress = await getConnectedWallet(location.username);
+    let checks = await fetchChecks(connectedAddress);
+    let rareCheck = fetchRareCheckFromList(checks.data);
+    // add adjacent to the username
+    let img = document.createElement('img');
+    img.src = rareCheck;
+    location.position.appendChild(img);
+  });
+}
 
 // TODO: for checks20, checks40 and checks80 we need to merge all the check color into a gradient
