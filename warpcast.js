@@ -1,9 +1,3 @@
-// get all total supply from contract 0x036721e5a769cc48b3189efbb9cce4471e8a48b1
-// add script <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
-// type="application/javascript"></script>
-
-// let  https://api.checks.art/checks?filter[owner]=0x5efdb6d8c798c2c2bea5b1961982a5944f92a5c1&page=1
-
 let locations = [];
 let checks = {};
 
@@ -18,6 +12,9 @@ const fetchRareCheckFromList = (tokens) => {
   // merge all checks into one array checks1, checks20, checks40 and checks80
   let allChecks = {
     checks1: [],
+    checks4: [],
+    checks5: [],
+    checks10: [],
     checks20: [],
     checks40: [],
     checks80: []
@@ -25,6 +22,9 @@ const fetchRareCheckFromList = (tokens) => {
   tokens.forEach(token => {
     if (!token.data) return;
     allChecks.checks1 = allChecks.checks1.concat(token.data.visuals.checks1);
+    allChecks.checks4 = allChecks.checks4.concat(token.data.visuals.checks4);
+    allChecks.checks5 = allChecks.checks5.concat(token.data.visuals.checks5);
+    allChecks.checks10 = allChecks.checks10.concat(token.data.visuals.checks10);
     allChecks.checks20 = allChecks.checks20.concat(token.data.visuals.checks20);
     allChecks.checks40 = allChecks.checks40.concat(token.data.visuals.checks40);
     allChecks.checks80 = allChecks.checks80.concat(token.data.visuals.checks80);
@@ -72,8 +72,9 @@ fetchChecks('0x5efdb6d8c798c2c2bea5b1961982a5944f92a5c1').then(data => {
 // given the username find the connected address using searchcaster
 async function getConnectedWallet(handle) {
   // e.g., https://searchcaster.xyz/api/profiles?username=nishu
-  let response = await fetch(`https://searchcaster.xyz/api/profiles?username=${handle}`);
+  let response = await fetch(`https://searchcaster.xyz/api/profiles?username=${handle.replace('@', '')}`);
   let data = await response.json();
+  console.log(handle, data[0].connectedAddress)
   return data[0].connectedAddress;
 }
 
@@ -182,15 +183,18 @@ const displayChecks = async () => {
   locations.forEach(async location => {
     // temperory display the check in the username
     let connectedAddress = await getConnectedWallet(location.username);
+    console.log(location.username, connectedAddress)
+    if (!connectedAddress) return;
     let checks = await fetchChecks(connectedAddress);
     let rareCheck = fetchRareCheckFromList(checks.data);
+    console.log(location.username, rareCheck, checksvg);
+    if (!rareCheck) return;
     // get the gradient from the rare check
     let colors = getArrayofColors(rareCheck);
     let gradient = getGradient(colors);
     // add the gradient to the svg
     checksvg = checksvg.replace('<defs>', `<defs>${gradient}`);
     checksvg = checksvg.replace('<use href="#check" fill="#DE3237"', `<use href="#check" fill="url(#gradient)"`);
-
     let ctr = document.createElement('div');
     ctr.style.display = 'flex';
     ctr.style.width = '22px';
@@ -200,11 +204,7 @@ const displayChecks = async () => {
     img.src = 'data:image/svg+xml,' + encodeURIComponent(checksvg);
     ctr.appendChild(img);
     location.position.parentElement.appendChild(ctr);
-    // // add adjacent to the username
-    // let img = document.createElement('img');
-    // img.src = rareCheck;
-    // location.position.appendChild(img);
   });
 }
 
-// TODO: for checks20, checks40 and checks80 we need to merge all the check color into a gradient
+displayChecks();
