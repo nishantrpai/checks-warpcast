@@ -20,7 +20,6 @@ const fetchRareCheckFromList = (tokens) => {
     checks80: []
   }
   tokens.forEach(token => {
-    console.log(token)
     if(!token.data) return;
     allChecks.checks1 = allChecks.checks1.concat(token.data.visuals.checks1);
     allChecks.checks20 = allChecks.checks20.concat(token.data.visuals.checks20);
@@ -34,18 +33,20 @@ const fetchRareCheckFromList = (tokens) => {
   allChecks.checks40 = allChecks.checks40.filter(check => check !== '');
   allChecks.checks80 = allChecks.checks80.filter(check => check !== '');
   
-  
+
+  console.log(allChecks)
+
   if (allChecks.checks1.length > 0) {
-    mostRare = 'checks1'
+    mostRare = allChecks.checks1[0];
   }
   else if (allChecks.checks20.length > 0) {
-    mostRare = 'checks20'
+    mostRare = allChecks.checks20[0]
   }
   else if (allChecks.checks40.length > 0) {
-    mostRare = 'checks40'
+    mostRare = allChecks.checks40[0]
   }
   else if (allChecks.checks80.length > 0) {
-    mostRare = 'checks80'
+    mostRare = allChecks.checks80[0]
   }
   return mostRare;
 }
@@ -54,3 +55,53 @@ fetchChecks('0x5efdb6d8c798c2c2bea5b1961982a5944f92a5c1').then(data => {
   console.log(data);
   console.log(fetchRareCheckFromList(data.data));
 });
+
+// get the selector to the username
+function getAllUsernames() {
+  // gets all the imgs that have the alt attribute containing the word avatar
+  let avatars = document.querySelectorAll('img[alt*="avatar"]');
+  let handles = [];
+  const userElements = [];
+  let locations = [];
+  avatars.forEach(avatar => {
+    // go up the parentelement till we get span with font-semibold class that is the username
+    let username = avatar.parentElement;
+    let count = 0;
+    while (!username?.querySelector('span.font-semibold')) {
+      username = username.parentElement;
+      if(count > 10) break;
+    }
+    if(username.querySelector('span.font-semibold')) {
+      userElements.push(username.querySelector('span.font-semibold'));
+    }
+
+    // keep going up the parent till we have the closest .text-muted class that is the handle
+    let handle = avatar.parentElement;
+    count = 0;
+    while (!handle?.querySelector('.text-muted')) {
+      handle = handle.parentElement;
+      if(count > 10) break;
+    }
+
+    if(handle.querySelector('.text-muted')) {
+      handles.push(handle.querySelector('.text-muted').innerText);
+    }
+  });
+  // userelements are where we'll place the checks
+  // handles are for querying the api for connected wallet address
+  // add to locations the userElements and handles 'position' and 'username' respectively
+  userElements.forEach((element, index) => {
+    locations.push({
+      position: element,
+      username: handles[index]
+    });
+  });
+  
+  console.log(locations);
+}
+// given the username find the connected address using searchcaster
+// get all the checks from the address
+// get the most rare check from the list
+// display the most rare check in the username
+
+// TODO: for checks20, checks40 and checks80 we need to merge all the check color into a gradient
