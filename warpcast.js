@@ -69,10 +69,23 @@ function getAllUsernames() {
     let count = 0;
     while (!username?.querySelector('span.font-semibold')) {
       username = username.parentElement;
+      count++;
       if(count > 10) break;
     }
     if(username.querySelector('span.font-semibold')) {
       userElements.push(username.querySelector('span.font-semibold'));
+    }
+
+    username = avatar.parentElement;
+    count = 0;
+    while (!username?.querySelector('span.font-bold.leading-5')) {
+      username = username.parentElement;
+      count++;
+      if(count > 10) break;
+    }
+
+    if(username.querySelector('span.font-bold.leading-5')) {
+      userElements.push(username.querySelector('span.font-bold.leading-5'));
     }
 
     // keep going up the parent till we have the closest .text-muted class that is the handle
@@ -80,17 +93,32 @@ function getAllUsernames() {
     count = 0;
     while (!handle?.querySelector('.text-muted')) {
       handle = handle.parentElement;
+      count++;
       if(count > 10) break;
     }
-
     if(handle.querySelector('.text-muted')) {
       handles.push(handle.querySelector('.text-muted').innerText);
+    }
+    handle = avatar.parentElement;
+    count = 0;
+    while (!handle?.querySelector('.text-faint'))  {
+      handle = handle.parentElement;
+      count++;
+      if(count > 10) break;
+    }
+    if(handle.querySelector('.text-faint')) {
+      handles.push(handle.querySelector('.text-faint').innerText);
     }
   });
   // userelements are where we'll place the checks
   // handles are for querying the api for connected wallet address
   // add to locations the userElements and handles 'position' and 'username' respectively
   userElements.forEach((element, index) => {
+    // handle should be @nishu etc can't have spaces or anything
+    if(handles[index].includes(' ')) return; 
+    if(!handles[index].includes('@')) return;
+    // if location already exists then skip
+    if(locations.find(location => location.position === element)) return;
     locations.push({
       position: element,
       username: handles[index]
