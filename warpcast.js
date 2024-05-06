@@ -64,17 +64,11 @@ const fetchRareCheckFromList = (tokens) => {
   return mostRare;
 }
 
-fetchChecks('0x5efdb6d8c798c2c2bea5b1961982a5944f92a5c1').then(data => {
-  console.log(data);
-  console.log(fetchRareCheckFromList(data.data));
-});
-
 // given the username find the connected address using searchcaster
 async function getConnectedWallet(handle) {
   // e.g., https://searchcaster.xyz/api/profiles?username=nishu
   let response = await fetch(`https://searchcaster.xyz/api/profiles?username=${handle.replace('@', '')}`);
   let data = await response.json();
-  console.log(handle, data[0].connectedAddress)
   return data[0].connectedAddress;
 }
 
@@ -166,7 +160,7 @@ function getArrayofColors(svg) {
   let matrix = [];
   let div = document.createElement('div');
   div.innerHTML = svg;
-  let checks = document.querySelectorAll('use[href="#check"]');
+  let checks = div.querySelectorAll('use[href="#check"]');
   matrix = Array.from(checks).map(check => check.getAttribute('fill'));
   return matrix;
 }
@@ -177,23 +171,64 @@ function getArrayofColors(svg) {
 // display the most rare check in the username
 const displayChecks = async () => {
   let locations = getAllUsernames();
-  let checksvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" style="width:100%;background:transparent;"><defs><path id="c" fill-rule="evenodd" d="M21.36 9.886A3.93 3.93 0 0 0 18 8a3.93 3.93 0 0 0-3.36 1.887 3.935 3.935 0 0 0-4.753 4.753A3.93 3.93 0 0 0 8 18c0 1.423.755 2.669 1.886 3.36a3.935 3.935 0 0 0 4.753 4.753 3.93 3.93 0 0 0 4.863 1.59 3.95 3.95 0 0 0 1.858-1.589 3.935 3.935 0 0 0 4.753-4.754A3.93 3.93 0 0 0 28 18a3.93 3.93 0 0 0-1.887-3.36 3.93 3.93 0 0 0-1.042-3.711 3.93 3.93 0 0 0-3.71-1.043Zm-3.958 11.713 4.562-6.844c.566-.846-.751-1.724-1.316-.878l-4.026 6.043-1.371-1.368c-.717-.722-1.836.396-1.116 1.116l2.17 2.15a.79.79 0 0 0 1.097-.22Z"/><path id="a" stroke="#191919" d="M0 0h36v36H0z"/><g id="b"><use href="#a" x="196" y="160"/><use href="#a" x="232" y="160"/><use href="#a" x="268" y="160"/><use href="#a" x="304" y="160"/><use href="#a" x="340" y="160"/><use href="#a" x="376" y="160"/><use href="#a" x="412" y="160"/><use href="#a" x="448" y="160"/></g></defs><path fill="transparent" d="M0 0h680v680H0z"/><path fill="#111" d="M188 152h304v376H188z"/><use href="#b"/><use href="#b" y="36"/><use href="#b" y="72"/><use href="#b" y="108"/><use href="#b" y="144"/><use href="#b" y="180"/><use href="#b" y="216"/><use href="#b" y="252"/><use href="#b" y="288"/><use href="#b" y="324"/><use href="#check" fill="#DE3237" transform="scale(3)"><animate attributeName="fill" values="#DE3237;#C23532;#FF7F8E;#E84AA9;#371471;#525EAA;#4576D0;#9AD9FB;#33758D;#77D3DE;#9DEFBF;#86E48E;#A7CA45;#FAE272;#F4C44A;#FAD064;#F2A840;#F18930;#D05C35;#EC7368;#DE3237" dur="10s" begin="d.begin" repeatCount="indefinite"/></use><path fill="transparent" d="M0 0h680v680H0z"><animate attributeName="width" from="680" to="0" dur="0.2s" begin="click" fill="freeze" id="d"/></path></svg>'
+  let checksvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" style="width:100%;background:transparent;">
+  <defs>
+    <path id="check" fill-rule="evenodd" d="M21.36 9.886A3.93 3.93 0 0 0 18 8a3.93 3.93 0 0 0-3.36 1.887 3.935 3.935 0 0 0-4.753 4.753A3.93 3.93 0 0 0 8 18c0 1.423.755 2.669 1.886 3.36a3.935 3.935 0 0 0 4.753 4.753 3.93 3.93 0 0 0 4.863 1.59 3.95 3.95 0 0 0 1.858-1.589 3.935 3.935 0 0 0 4.753-4.754A3.93 3.93 0 0 0 28 18a3.93 3.93 0 0 0-1.887-3.36 3.93 3.93 0 0 0-1.042-3.711 3.93 3.93 0 0 0-3.71-1.043Zm-3.958 11.713 4.562-6.844c.566-.846-.751-1.724-1.316-.878l-4.026 6.043-1.371-1.368c-.717-.722-1.836.396-1.116 1.116l2.17 2.15a.79.79 0 0 0 1.097-.22Z"/>
+    <path id="a" stroke="#191919" d="M0 0h36v36H0z"/>
+    <g id="b">
+      <use href="#a" x="196" y="160"/>
+      <use href="#a" x="232" y="160"/>
+      <use href="#a" x="268" y="160"/>
+      <use href="#a" x="304" y="160"/>
+      <use href="#a" x="340" y="160"/>
+      <use href="#a" x="376" y="160"/>
+      <use href="#a" x="412" y="160"/>
+      <use href="#a" x="448" y="160"/>
+    </g>
+  </defs>
+  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#DE3237"/>
+    <stop offset="20%" stop-color="#DE3237"/>
+    <stop offset="40%" stop-color="#EF9933"/>
+    <stop offset="60%" stop-color="#EB4429"/>
+  </linearGradient>
+  <path fill="transparent" d="M0 0h680v680H0z"/>
+  <path fill="#111" d="M188 152h304v376H188z"/>
+  <use href="#b"/>
+  <use href="#b" y="36"/>
+  <use href="#b" y="72"/>
+  <use href="#b" y="108"/>
+  <use href="#b" y="144"/>
+  <use href="#b" y="180"/>
+  <use href="#b" y="216"/>
+  <use href="#b" y="252"/>
+  <use href="#b" y="288"/>
+  <use href="#b" y="324"/>
+  <use href="#check" fill="#DE3237" transform="scale(3)">
+    <animate attributeName="fill" values="#DE3237;#C23532;#FF7F8E;#E84AA9;#371471;#525EAA;#4576D0;#9AD9FB;#33758D;#77D3DE;#9DEFBF;#86E48E;#A7CA45;#FAE272;#F4C44A;#FAD064;#F2A840;#F18930;#D05C35;#EC7368;#DE3237" dur="10s" begin="d.begin" repeatCount="indefinite"/>
+  </use>
+  <path fill="transparent" d="M0 0h680v680H0z">
+    <animate attributeName="width" from="680" to="0" dur="0.2s" begin="click" fill="freeze" id="d"/>
+  </path>
+</svg>
+`;
 
 
   locations.forEach(async location => {
     // temperory display the check in the username
     let connectedAddress = await getConnectedWallet(location.username);
-    console.log(location.username, connectedAddress)
-    if (!connectedAddress) return;
+    // console.log(location.username, connectedAddress)
+    // if (!connectedAddress) return;
     let checks = await fetchChecks(connectedAddress);
     let rareCheck = fetchRareCheckFromList(checks.data);
-    console.log(location.username, rareCheck, checksvg);
+    // console.log(location.username, rareCheck, checksvg);
     if (!rareCheck) return;
     // get the gradient from the rare check
     let colors = getArrayofColors(rareCheck);
     let gradient = getGradient(colors);
     // add the gradient to the svg
-    checksvg = checksvg.replace('<defs>', `<defs>${gradient}`);
+    checksvg = checksvg.replace('</defs>', `</defs>\n${gradient}`);
     checksvg = checksvg.replace('<use href="#check" fill="#DE3237"', `<use href="#check" fill="url(#gradient)"`);
     let ctr = document.createElement('div');
     ctr.style.display = 'flex';
